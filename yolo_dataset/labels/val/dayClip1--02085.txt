@@ -1,0 +1,1 @@
+/home/auto_drive/Desktop/Traffic------new/yolo_dataset/labels/train_all/dayClip1--02085.txt
