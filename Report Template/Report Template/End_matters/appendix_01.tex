@@ -1,0 +1,65 @@
+\chapter{System Specifications and Environment}\label{app:sysspec}
+
+This appendix provides details of the hardware and software environment used during dataset preparation, model training, and evaluation.
+
+\section{Hardware Specifications}
+
+\begin{table}[ht]
+\caption{Hardware used for model training and evaluation.}
+\label{tb:hardware}
+\begin{center}
+\begin{tabular}{l|l}
+\textbf{Component} & \textbf{Specification} \\
+\hline
+GPU & NVIDIA GeForce RTX 5090 \\
+GPU VRAM & 32\,GB GDDR7 \\
+Peak VRAM usage during training & 15.4\,GB \\
+Total training time & 2 hours 14 minutes \\
+\end{tabular}
+\end{center}
+\end{table}
+
+\section{Software Environment}
+
+\begin{table}[ht]
+\caption{Software versions used in this project.}
+\label{tb:software}
+\begin{center}
+\begin{tabular}{l|l}
+\textbf{Package} & \textbf{Version} \\
+\hline
+Python & 3.10.13 \\
+PyTorch & 2.9.0+cu128 \\
+Ultralytics (YOLOv8) & 8.3.222 \\
+OpenCV & 4.x \\
+CUDA & 12.8 \\
+Operating System & Linux (Ubuntu) \\
+\end{tabular}
+\end{center}
+\end{table}
+
+\section{Dataset Statistics}
+
+\begin{table}[ht]
+\caption{LISA Traffic Light Dataset statistics used in this project.}
+\label{tb:dataset}
+\begin{center}
+\begin{tabular}{l|r}
+\textbf{Property} & \textbf{Value} \\
+\hline
+Training images (original) & 20,535 \\
+Training images (after oversampling) & 17,274 \\
+Validation images & 4,877 \\
+Test images & 22,481 \\
+Total annotated bounding boxes (training) & $\approx$219,832 \\
+Image resolution & 1280 $\times$ 960 pixels \\
+Annotation format & Supervisely JSON (.jpg.json) \\
+Semantic classes & 3 (go, stop, warning) \\
+Original class labels & 14 \\
+\end{tabular}
+\end{center}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% END OF FILE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

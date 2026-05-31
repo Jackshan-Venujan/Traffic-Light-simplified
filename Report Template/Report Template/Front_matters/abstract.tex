@@ -1,0 +1,12 @@
+
+\chapter*{Abstract}
+
+Traffic light detection is a fundamental requirement for Advanced Driver Assistance Systems (ADAS) and autonomous vehicles. This project presents an end-to-end deep learning pipeline for real-time detection and classification of traffic light states — go (green), stop (red), and warning (yellow/amber) — from dashcam video sequences. The Large Scale Illumination and Scene Adaptive (LISA) Traffic Light Dataset, comprising over 42,000 annotated images in Supervisely JSON format, was employed as the training and evaluation resource. A YOLOv8s model was fine-tuned using transfer learning from weights pre-trained on the Common Objects in Context (COCO) dataset, enabling rapid convergence on the three-class detection task.
+
+Two critical challenges were identified and addressed during data preprocessing. First, approximately 96\% of annotated bounding boxes were classified as Tiny or Small under the COCO benchmark size taxonomy, necessitating a high input resolution of 1280 pixels. Second, a severe class imbalance was observed, with stop and go annotations outnumbering warning instances by a ratio of 19:1; this was remedied through image-level oversampling of warning-class training sequences. A sequence-aware train/validation split was applied to prevent temporal data leakage between consecutive video frames.
+
+The trained model achieved an overall mAP@50 of 0.768 on the validation set, with per-class mAP@50 values of 0.645 for go, 0.816 for stop, and 0.843 for warning. The stop class attained a recall of 0.959, confirming high sensitivity to the most safety-critical signal state. The model was subsequently exported to ONNX format, enabling cross-platform deployment on Android devices and web-based applications.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% END OF FILE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
