@@ -872,4 +872,3 @@ The client uploads an image; the server returns JSON with class labels, confiden
 
 ---
 
-*Project by Jackshan-Venujan — LISA Traffic Light Detection with YOLOv8s*
