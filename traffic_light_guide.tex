@@ -1,0 +1,1085 @@
+% =====================================================================
+%  traffic_light_guide.tex
+%  A complete beginner-to-viva teaching guide for the
+%  YOLOv8s Traffic-Light Detection project (LISA dataset, 3 classes).
+%
+%  -------------------------------------------------------------------
+%  HOW TO COMPILE
+%  -------------------------------------------------------------------
+%  This file uses the `minted` package for code highlighting, which
+%  needs Python + Pygments installed (pip install Pygments) AND the
+%  -shell-escape flag. Compile TWICE so the table of contents and all
+%  \ref / \hyperref cross-references resolve:
+%
+%      pdflatex -shell-escape traffic_light_guide.tex
+%      pdflatex -shell-escape traffic_light_guide.tex
+%
+%  (xelatex -shell-escape also works.)
+%
+%  -------------------------------------------------------------------
+%  NO PYGMENTS?  FALLBACK TO lstlisting
+%  -------------------------------------------------------------------
+%  If you cannot install Pygments (e.g. Overleaf free tier limits, or a
+%  bare MiKTeX install), do this:
+%    1. Comment out:  \usepackage{minted}
+%    2. Uncomment the listings block marked "FALLBACK" below.
+%    3. Replace every  \begin{minted}{python} ... \end{minted}
+%       with           \begin{lstlisting} ... \end{lstlisting}
+%       (a simple find/replace).
+%  Then compile normally with plain pdflatex (no -shell-escape needed).
+% =====================================================================
+
+\documentclass[11pt,a4paper]{report}
+
+% ---------- Encoding & fonts ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% ---------- Page geometry ----------
+\usepackage[a4paper,margin=2.5cm]{geometry}
+
+% ---------- Maths, tables, graphics ----------
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{xcolor}
+
+% ---------- Code highlighting (minted) ----------
+\usepackage{minted}
+\setminted{fontsize=\footnotesize, breaklines=true, breakanywhere=true,
+           tabsize=4, frame=single, framesep=4pt, bgcolor=gray!6}
+
+% ===== FALLBACK (uncomment if you cannot use minted) =================
+% \usepackage{listings}
+% \lstset{language=Python, basicstyle=\footnotesize\ttfamily,
+%         keywordstyle=\color{blue}, commentstyle=\color{green!50!black},
+%         stringstyle=\color{red!60!black}, frame=single,
+%         breaklines=true, showstringspaces=false, numbers=left,
+%         numberstyle=\tiny, backgroundcolor=\color{gray!6}}
+% ====================================================================
+
+% ---------- Callout boxes (tcolorbox) ----------
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{breakable,skins}
+
+\newtcolorbox{keyconcept}[1][]{breakable, enhanced, colback=blue!5!white,
+  colframe=blue!55!black, fonttitle=\bfseries, title={Key Concept#1},
+  left=2mm,right=2mm,top=1mm,bottom=1mm}
+
+\newtcolorbox{analogy}[1][]{breakable, enhanced, colback=green!6!white,
+  colframe=green!45!black, fonttitle=\bfseries, title={Real-Life Analogy#1},
+  left=2mm,right=2mm,top=1mm,bottom=1mm}
+
+\newtcolorbox{warningbox}[1][]{breakable, enhanced, colback=red!5!white,
+  colframe=red!60!black, fonttitle=\bfseries, title={Warning / Common Pitfall#1},
+  left=2mm,right=2mm,top=1mm,bottom=1mm}
+
+\newtcolorbox{diagramprompt}[1][]{breakable, enhanced, colback=orange!6!white,
+  colframe=orange!65!black, fonttitle=\bfseries\ttfamily,
+  title={DIAGRAM PROMPT (recreate in draw.io)#1},
+  left=2mm,right=2mm,top=1mm,bottom=1mm}
+
+% ---------- Hyperlinks (load near last) ----------
+\usepackage[colorlinks=true, linkcolor=blue!55!black, citecolor=green!45!black,
+            urlcolor=magenta!70!black, bookmarks=true]{hyperref}
+
+% ---------- A robust image helper ----------
+% Inserts the image if it exists, otherwise a labelled placeholder box,
+% so the document always compiles even if a PNG is missing.
+\newcommand{\maybefig}[4]{% #1=path #2=width-fraction #3=caption #4=label
+  \begin{figure}[H]\centering
+    \IfFileExists{#1}{\includegraphics[width=#2\linewidth]{#1}}%
+      {\fbox{\parbox[c][3.5cm][c]{0.8\linewidth}{\centering\ttfamily
+        [image not found:\\ \detokenize{#1}]\\[2mm]\normalfont\small
+        (compile in the project root so this PNG is on the graphics path)}}}
+    \caption{#3}\label{#4}
+  \end{figure}}
+
+% Search these folders for images
+\graphicspath{%
+  {./}%
+  {./runs/traffic_light_v1/}%
+  {./Report Template/Report Template/Images/Chapter2/}%
+  {./Report Template/Report Template/Images/Chapter3/}%
+  {./Report Template/Report Template/Images/Chapter4/}%
+}
+
+\title{\Huge\bfseries Teaching Yourself Traffic-Light Detection\\[4mm]
+  \Large A Complete Beginner-to-Viva Guide to a YOLOv8s\\
+  Object-Detection Project on the LISA Dataset}
+\author{Generated as a study companion for the\\
+  \texttt{Traffic-Light-simplified} project notebook}
+\date{\today}
+
+\begin{document}
+
+% ============================ TITLE ============================
+\maketitle
+
+\begin{abstract}
+\noindent
+This document teaches, from absolute zero, how a working traffic-light
+\emph{detector} was built in the project notebook
+\texttt{traffic-light-model.ipynb}. It explains the theory (what a
+convolutional neural network is, what object detection means, how the
+YOLOv8 architecture works, and what every evaluation metric means) and
+the practice (how the data was cleaned, converted, split, balanced,
+trained, evaluated, and exported). Every number quoted here is taken
+directly from the project's own files: \texttt{runs/traffic\_light\_v1/results.csv},
+\texttt{args.yaml}, \texttt{yolo\_dataset/data.yaml}, and the captured
+notebook outputs. The final model is a fine-tuned \textbf{YOLOv8s}
+network that maps the LISA dataset's $14$ raw labels down to
+$3$ classes (\texttt{go}, \texttt{stop}, \texttt{warning}) and reaches a
+best validation \textbf{mAP@0.5 of 0.768} at epoch~27. The last chapter is
+a dedicated viva-preparation section with model answers to the questions
+an examiner is most likely to ask.
+\end{abstract}
+
+\tableofcontents
+
+% ====================================================================
+\chapter{Introduction: What Are We Even Building?}
+\label{ch:intro}
+% ====================================================================
+
+\section{The one-sentence summary}
+We built a computer program that looks at a photo from a car's
+dashboard camera and draws a coloured box around every traffic light it
+sees, labelling each one as \texttt{go} (green), \texttt{stop} (red), or
+\texttt{warning} (yellow/amber).
+
+\begin{analogy}
+Imagine teaching a brand-new driving student. At first they cannot even
+\emph{find} the traffic lights in a busy street scene. You show them
+thousands of photos, each with the lights circled and named. Eventually
+they can glance at any new street and instantly point: ``red there,
+green there.'' Our project does exactly this, but the ``student'' is a
+neural network and the ``thousands of photos'' is the LISA dataset.
+\end{analogy}
+
+\section{Three tasks that sound similar but are not}
+Beginners constantly mix these up. Pin them down now.
+
+\begin{keyconcept}[: classification vs.\ detection vs.\ segmentation]
+\begin{itemize}
+  \item \textbf{Classification} answers \emph{``what is in this image?''}
+        with one label for the \emph{whole} image (e.g.\ ``this is a cat'').
+        It does \emph{not} say \emph{where}.
+  \item \textbf{Object detection} answers \emph{``what objects are here
+        and where?''} It outputs a \textbf{bounding box} (a rectangle)
+        plus a class label for \emph{each} object. \textbf{This is our task.}
+  \item \textbf{Segmentation} goes further and labels \emph{every pixel}
+        (the exact silhouette). We do \emph{not} do this.
+\end{itemize}
+\end{keyconcept}
+
+\begin{analogy}
+Classification is a librarian saying ``this book is a thriller.''
+Detection is the librarian saying ``there are three thrillers, and here
+is the exact shelf position of each.'' Segmentation is tracing the
+outline of every single book with a pen.
+\end{analogy}
+
+\section{Why traffic-light detection matters}
+A self-driving or driver-assistance (ADAS, \emph{Advanced Driver
+Assistance System}) car must know, many times per second, whether the
+light ahead is red or green. A wrong answer is a safety failure. That is
+why, as we will see in Chapter~\ref{ch:eval}, we care most about the
+model never \emph{missing} a red \texttt{stop} light.
+
+\section{The project goal, stated precisely}
+Take the LISA Traffic Light dataset, simplify its $14$ fine-grained
+labels into $3$ meaningful driving actions, train a YOLOv8s detector to
+find and classify these lights in $1280\times960$ dashcam frames, and
+produce a deployable model file. Chapters~\ref{ch:cnn}--\ref{ch:deploy}
+follow the notebook cell by cell.
+
+% ====================================================================
+\chapter{CNN Foundations for Complete Beginners}
+\label{ch:cnn}
+% ====================================================================
+
+\section{An image is just a grid of numbers}
+\begin{keyconcept}[: pixels and tensors]
+A colour image is a 3-D block of numbers called a \textbf{tensor}. Our
+frames are $1280$ wide $\times\,960$ tall $\times\,3$ colour channels
+(Red, Green, Blue). Each number is a pixel brightness from $0$ to $255$.
+So one frame is $1280\times960\times3 = 3{,}686{,}400$ numbers. The
+network only ever sees numbers --- never ``a traffic light.''
+\end{keyconcept}
+
+\begin{analogy}
+Think of a mosaic made of tiny coloured tiles. From far away you see a
+picture; up close it is just thousands of individual tiles. A computer
+is always ``up close'': it sees the tiles (pixels), and our job is to
+teach it to recognise the picture they form.
+\end{analogy}
+
+\section{Why not just use a normal neural network?}
+A plain (``fully connected'') network would give every one of those
+$3.6$ million numbers its own separate weight, for every neuron. That is
+astronomically many parameters, and worse, it has no idea that a pixel
+and its neighbour are related. It would also have to re-learn what a
+traffic light looks like separately for every position in the image.
+
+\section{Convolution: the sliding stamp}
+\begin{keyconcept}[: convolution and feature maps]
+A \textbf{convolution} slides a small window (a \textbf{kernel} or
+\textbf{filter}, e.g.\ $3\times3$) across the image. At each position it
+multiplies the pixels under it by the kernel's weights and adds them up,
+producing one number. Sweeping the whole image gives a new grid called a
+\textbf{feature map}. Different kernels detect different things: edges,
+corners, blobs of red, round bright shapes. Stacking many convolution
+layers lets later layers combine simple features (edges) into complex
+ones (a traffic-light housing with a glowing lamp).
+\end{keyconcept}
+
+\begin{analogy}
+A convolution kernel is a small rubber stamp. You press the same stamp
+all over a page; wherever the pattern underneath matches the stamp, you
+get a strong mark. Because it is the \emph{same} stamp everywhere, the
+network recognises a red light whether it appears top-left or
+bottom-right --- this is called \textbf{translation invariance}, and it is
+why CNNs beat plain networks on images.
+\end{analogy}
+
+\begin{warningbox}
+``CNN'' is not magic pattern recognition that ``just knows'' a traffic
+light. It only knows what it was \emph{shown} during training. Our model
+was shown small, far-away lights, so (as the notebook's own ``next
+steps'' admit) it struggles with large close-up lights it never saw.
+\end{warningbox}
+
+% ====================================================================
+\chapter{From Classification to Detection: How YOLO Works}
+\label{ch:yolo}
+% ====================================================================
+
+\section{Bounding boxes}
+A \textbf{bounding box} is the tightest rectangle that encloses an
+object. It is described by four numbers. The dataset stores two opposite
+\emph{corners} in pixels; YOLO instead wants the box \emph{centre} plus
+its width and height, each divided by the image size so the values sit
+between $0$ and $1$ (we convert between the two in
+Chapter~\ref{ch:dataprep}).
+
+\section{IoU: measuring ``how good is this box?''}
+\begin{keyconcept}[: Intersection over Union (IoU)]
+\textbf{IoU} compares a predicted box with the true box:
+\[
+\mathrm{IoU} = \frac{\text{area of overlap}}{\text{area of union}}.
+\]
+$\mathrm{IoU}=1$ means a perfect match; $0$ means no overlap. A
+prediction usually ``counts'' as correct only if its IoU with a real box
+exceeds a threshold (commonly $0.5$). IoU also drives \textbf{NMS}
+(Section~\ref{sec:nms}).
+\end{keyconcept}
+
+\begin{analogy}
+Two people describe where a parked car is by drawing chalk rectangles on
+the road. IoU is how much their two rectangles overlap. Lots of
+overlap = they basically agree.
+\end{analogy}
+
+\section{One-stage vs.\ two-stage, and why we chose YOLO}
+\begin{keyconcept}[: one-stage detectors]
+\textbf{Two-stage} detectors (e.g.\ Faster R-CNN) first propose
+candidate regions, then classify each --- accurate but slower.
+\textbf{One-stage} detectors like \textbf{YOLO} (``You Only Look Once'')
+predict all boxes and classes in a single pass over the image --- fast
+enough for real-time video, which a car needs. YOLOv8 is
+\textbf{anchor-free}: instead of comparing against a fixed set of
+pre-defined ``anchor'' box shapes, it directly predicts each box's
+geometry, which simplifies training.
+\end{keyconcept}
+
+\section{The YOLOv8 architecture: backbone, neck, head}
+\label{sec:arch}
+\begin{keyconcept}[: the three parts of YOLOv8]
+\begin{itemize}
+  \item \textbf{Backbone} --- a deep CNN that turns the raw image into
+        feature maps at several resolutions. It extracts ``what is
+        where, roughly.''
+  \item \textbf{Neck} (a feature-pyramid, FPN/PAN style) --- mixes the
+        fine, high-resolution maps (good for \emph{small} objects) with
+        the coarse, deep maps (good for \emph{large} objects and
+        context). Crucial here because traffic lights are tiny.
+  \item \textbf{Head} --- the output layer that, for each location,
+        predicts the box geometry and the class scores
+        (\texttt{go}/\texttt{stop}/\texttt{warning}).
+\end{itemize}
+Our specific model, \textbf{YOLOv8s} (``small''), has
+\textbf{11{,}126{,}745 parameters} and runs at $28.4$ GFLOPs
+(from the notebook's model summary).
+\end{keyconcept}
+
+\begin{analogy}
+A factory line: the \textbf{backbone} is workers who inspect the raw
+material and note its features; the \textbf{neck} is a supervisor who
+combines notes from close-up and wide-angle inspectors; the
+\textbf{head} is the stamper who writes the final verdict ``red light,
+here, this big.''
+\end{analogy}
+
+\begin{diagramprompt}
+Draw three large boxes left-to-right joined by arrows:
+[INPUT IMAGE 1280x1280x3] -> [BACKBONE: stack of Conv + C2f blocks,
+shrinking H,W while growing channels; show 3 side outputs P3,P4,P5] ->
+[NECK: FPN/PAN -- two columns of arrows, one going up (upsample + concat),
+one going down (downsample + concat), merging P3/P4/P5] ->
+[HEAD: 3 detection branches, each outputting (box: x,y,w,h) + (3 class
+scores)]. Label P3 "fine map / small objects", P5 "coarse map / large
+objects". Add a final arrow to [NMS] -> [FINAL BOXES].
+\end{diagramprompt}
+
+\maybefig{runs/traffic_light_v1/training_curves.png}{0.95}{The six training curves YOLOv8
+saved for this run. We dissect these in Chapter~\ref{ch:train}.}{fig:curves-preview}
+
+% ====================================================================
+\chapter{The Dataset: LISA Traffic Lights}
+\label{ch:data}
+% ====================================================================
+
+\section{What we were given}
+The source is the \textbf{LISA Traffic Light Dataset} in Supervisely
+JSON format. From the notebook's verification output (CELL~2):
+\begin{itemize}
+  \item \textbf{Train:} $20{,}535$ images, each with a matching
+        \texttt{.jpg.json} annotation file.
+  \item \textbf{Test:} $22{,}481$ images.
+  \item \textbf{Total:} $43{,}016$ images. Every frame is
+        $1280\times960$ pixels.
+  \item \texttt{meta.json} declares $14$ classes.
+  \item Frames are grouped into \textbf{sequences} (short video clips
+        like \texttt{dayClip1}, \texttt{daySequence1}); consecutive
+        frames look almost identical. Remember this --- it causes the
+        ``data leakage'' problem in Chapter~\ref{ch:hardproblems}.
+\end{itemize}
+
+\section{The annotation format}
+Each object is a \texttt{rectangle} with two corner points in pixels.
+Here is the real first training file (CELL~3), trimmed:
+
+\begin{minted}{json}
+{
+  "size": { "height": 960, "width": 1280 },
+  "tags": [ {"name": "sequence", "value": "Clip1"}, {"name": "day"} ],
+  "objects": [
+    { "classTitle": "go traffic light",
+      "points": { "exterior": [ [698, 333], [710, 358] ] } }
+  ]
+}
+\end{minted}
+
+\noindent
+So this light's box runs from corner $(698,333)$ to $(710,358)$ --- only
+$12\times25$ pixels, about $0.024\%$ of the image. Traffic lights are
+\emph{tiny}.
+
+\section{Why collapse 14 classes into 3?}
+The raw labels separate things a \emph{driver} does not care about:
+``stop'' vs.\ ``stop left'' vs.\ ``stop left traffic light'' all mean
+\emph{the car must stop}. Splitting hairs would (a) starve each tiny
+class of training examples and (b) add no driving value. So CELL~5 maps
+everything onto three \emph{actions}:
+
+\begin{keyconcept}[: the 14$\to$3 mapping]
+\texttt{go}, \texttt{go left}, \texttt{go forward} ($+$ ``traffic light''
+variants) $\rightarrow$ \textbf{go}.\quad
+\texttt{stop}, \texttt{stop left} ($+$ variants) $\rightarrow$
+\textbf{stop}.\quad
+\texttt{warning}, \texttt{warning left} ($+$ variants) $\rightarrow$
+\textbf{warning}.\\
+Numeric IDs (YOLO needs numbers, not words):
+\texttt{go}$=0$, \texttt{stop}$=1$, \texttt{warning}$=2$.
+\end{keyconcept}
+
+\section{Exploratory data analysis (EDA): three findings}
+\subsection{Finding 1 --- severe class imbalance}
+After mapping, the $104{,}534$ training boxes split as in
+Table~\ref{tab:classdist}.
+
+\begin{table}[H]\centering
+\caption{Class distribution after the 14$\to$3 mapping (CELL~5/6 output).}
+\label{tab:classdist}
+\begin{tabular}{lrr}
+\toprule
+Class & Boxes & Share \\
+\midrule
+\texttt{stop}    & $52{,}450$ & $50.2\%$ \\
+\texttt{go}      & $48{,}892$ & $46.8\%$ \\
+\texttt{warning} & $3{,}192$  & $3.1\%$  \\
+\midrule
+Total & $104{,}534$ & $100\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\texttt{warning} is starved: the ratio is about
+\textbf{16:1} (stop\,:\,warning). We fix this in
+Chapter~\ref{ch:hardproblems}.
+
+\maybefig{class_distribution.png}{0.95}{Left: raw 14-class counts.
+Right: the consolidated 3 classes, with the under-represented
+\texttt{warning} bar flagged in red.}{fig:classdist}
+
+\subsection{Finding 2 --- these are small objects}
+From CELL~7: the median box side is only $\approx 18$~px and covers
+$0.0263\%$ of the frame. Using the COCO size convention,
+\textbf{$68.6\%$ of boxes are ``Tiny'' ($<32$\,px)} and $31.3\%$ are
+``Small'' --- $99.9\%$ together. This single fact justifies two later
+choices: the high $1280$ input resolution and the YOLOv8\textbf{s} (not
+nano) model.
+
+\maybefig{bbox_analysis.png}{0.95}{Box-size analysis: width-vs-height
+scatter, relative-width histogram, and the COCO size-category pie. The
+verdict is ``small-object detection problem.''}{fig:bbox}
+
+\subsection{Finding 3 --- day/night and sequences}
+Of images with objects, $12{,}872$ are daytime and $5{,}266$ nighttime;
+the data spans $18$ sequences. Night is under-represented (a noted
+weakness).
+
+\maybefig{class_samples.png}{0.9}{Sample frames per class. The inner box
+is the true annotation; the outer box is a zoom guide because the real
+lights are too small to see otherwise.}{fig:samples}
+
+% ====================================================================
+\chapter{Data Preparation: From JSON to YOLO}
+\label{ch:dataprep}
+% ====================================================================
+
+\section{The folder layout YOLO expects}
+YOLO finds a label by taking the image path, swapping the word
+\texttt{images} for \texttt{labels}, and \texttt{.jpg} for \texttt{.txt}
+(CELL~9):
+\begin{minted}{text}
+yolo_dataset/
+  data.yaml
+  images/{train,val,test}/   <- the .jpg frames
+  labels/{train,val,test}/   <- one .txt per image (the boxes)
+\end{minted}
+
+\section{Converting one box (the maths)}
+\begin{keyconcept}[: normalised YOLO coordinates]
+Given corner pixels $(x_1,y_1)$ and $(x_2,y_2)$ in an image
+$W\times H$, YOLO wants
+\[
+x_c=\frac{x_1+x_2}{2W},\;\; y_c=\frac{y_1+y_2}{2H},\;\;
+w=\frac{x_2-x_1}{W},\;\; h=\frac{y_2-y_1}{H}.
+\]
+Dividing by $W,H$ makes the numbers \emph{resolution-independent}
+(always $0$--$1$), so the same label still works if the image is resized.
+\end{keyconcept}
+
+\paragraph{Worked example (the real first box).}
+Corners $(698,333)\to(710,358)$ in $1280\times960$:
+\[
+x_c=\tfrac{698+710}{2\cdot1280}=0.5500,\;
+y_c=\tfrac{333+358}{2\cdot960}=0.3599,\;
+w=\tfrac{12}{1280}=0.0094,\;
+h=\tfrac{25}{960}=0.0260.
+\]
+The label line is therefore \texttt{0 0.550000 0.359896 0.009375 0.026042}
+(class~$0=$\,\texttt{go}) --- exactly what the notebook printed.
+
+\begin{minted}{python}
+# CELL 10 (core of the converter) -- see the notebook for the full loop
+x_centre = (x1 + x2) / 2 / img_w
+y_centre = (y1 + y2) / 2 / img_h
+width    = (x2 - x1)     / img_w
+height   = (y2 - y1)     / img_h
+line = f"{class_id} {x_centre:.6f} {y_centre:.6f} {width:.6f} {height:.6f}"
+\end{minted}
+
+\begin{diagramprompt}
+Two side-by-side panels. LEFT "JSON / pixel space": a 1280x960 rectangle
+with a tiny box; annotate corners (698,333) top-left and (710,358)
+bottom-right. RIGHT "YOLO / normalised space": the same rectangle scaled
+to 1x1; annotate centre dot (0.550, 0.360), width 0.0094, height 0.0260.
+A big arrow labelled "divide by W,H" points LEFT->RIGHT.
+\end{diagramprompt}
+
+\section{The \texttt{data.yaml} file}
+This tiny file is what you actually hand to YOLO. The project's real one:
+\begin{minted}{yaml}
+path: .../yolo_dataset
+train: images/train
+val:   images/val
+test:  images/test
+nc: 3
+names: [go, stop, warning]   # index 0, 1, 2 -- order MUST match the IDs
+\end{minted}
+
+\begin{warningbox}
+The order of \texttt{names} \emph{is} the class ID. If you wrote
+\texttt{[stop, go, warning]} here, every label file (which uses $0$ for
+\texttt{go}) would silently be mis-named and your model would learn red
+lights as ``go.'' CELL~13 explicitly validates this order.
+\end{warningbox}
+
+\section{Trust, but verify: auditing and visualising}
+Two safety nets before training:
+\begin{itemize}
+  \item \textbf{Audit (CELL~14):} every \texttt{.txt} line must have
+        exactly $5$ values, a class ID in $\{0,1,2\}$, and coordinates in
+        range. The project reported \textbf{0 errors} across all splits.
+  \item \textbf{Visual check (CELL~15):} re-draw boxes \emph{from the
+        generated \texttt{.txt} files} (not the JSON). If they still land
+        on the lights, the conversion was correct.
+\end{itemize}
+
+\maybefig{yolo_label_check.png}{0.92}{Boxes drawn from the converted
+\texttt{.txt} labels. Because they still sit on the lights, the JSON
+$\to$ YOLO conversion is verified.}{fig:labelcheck}
+
+% ====================================================================
+\chapter{The Two Hard Problems (and Their Fixes)}
+\label{ch:hardproblems}
+% ====================================================================
+These two decisions are the most ``defendable'' engineering choices in
+the project --- examiners love them.
+
+\section{Problem 1: data leakage from near-identical frames}
+\begin{keyconcept}[: data leakage]
+\textbf{Data leakage} is when information from the test/validation data
+sneaks into training, giving a falsely high score. Here the danger is
+subtle: consecutive frames in a clip are almost the same picture. If
+\texttt{dayClip1--00000} went to \emph{train} and
+\texttt{dayClip1--00001} went to \emph{val}, the model would be
+``tested'' on a frame it has practically already seen.
+\end{keyconcept}
+
+\begin{analogy}
+It is like giving a student the exam questions as homework the night
+before. They score $99\%$, but you have learned nothing about whether
+they actually understand the subject.
+\end{analogy}
+
+\paragraph{The fix --- sequence-aware split (CELL~11).} Split by
+\emph{whole sequence}, never by frame. Of $18$ sequences, $15$ went to
+train ($15{,}658$ images) and $3$ to validation ($4{,}877$ images). The
+code then asserts no sequence appears in both sets --- the
+\emph{leakage check PASSED}.
+
+\begin{diagramprompt}
+Draw a row of film-strip icons grouped into 18 labelled clips. Colour 15
+clips blue ("train") and 3 green ("val"). Show a red crossed-out arrow
+between a blue and a green clip labelled "NO shared sequence -> no
+leakage". Contrast with a faded "WRONG" inset where individual frames of
+ONE clip are split across train and val.
+\end{diagramprompt}
+
+\begin{warningbox}
+Because there are only $\sim$18 sequences and \texttt{warning}-dominant
+clips are rare, a \emph{stratified} split failed, so the code falls back
+to a plain random split of sequences. The trade-off: the class balance of
+train vs.\ val is not perfectly controlled --- which partly explains why
+per-class validation numbers vary a lot.
+\end{warningbox}
+
+\section{Problem 2: class imbalance}
+With \texttt{warning} at only $\sim$3\% of boxes, a lazy model could
+ignore yellow lights entirely and still score well on raw accuracy.
+
+\begin{keyconcept}[: oversampling]
+\textbf{Oversampling} means showing the rare class \emph{more often}
+during training. CELL~12 finds the $404$ \texttt{warning}-dominant train
+images ($2.6\%$) and creates extra copies (via symlinks) so that
+\texttt{warning} rises to a target. Using a $5\times$ factor lifts the
+warning share to about \textbf{11.7\%} of the train set.
+\end{keyconcept}
+
+\begin{analogy}
+If a student keeps failing the few questions on one rare topic, you make
+them practise that topic five times as much. They do not get new facts,
+just more exposure, until it sticks.
+\end{analogy}
+
+\begin{warningbox}
+Oversampling shows the \emph{same} images repeatedly, which risks
+\textbf{overfitting} to those exact frames. The project mitigates this by
+relying on YOLO's \textbf{mosaic} and \textbf{mixup} augmentation, which
+recombine and blend images so each ``copy'' is seen in a fresh context.
+\end{warningbox}
+
+% ====================================================================
+\chapter{Training the Model}
+\label{ch:train}
+% ====================================================================
+
+\section{The training command}
+Training is a few lines (CELL~16); the heavy lifting is Ultralytics'.
+
+\begin{minted}{python}
+from ultralytics import YOLO
+model = YOLO('yolov8s.pt')          # start from COCO-pretrained weights
+results = model.train(
+    data='yolo_dataset/data.yaml',
+    epochs=50, imgsz=1280, batch=16, device=0,
+    mosaic=1.0, mixup=0.1, fliplr=0.5,           # augmentation
+    lr0=0.01, lrf=0.01, warmup_epochs=3,         # optimiser schedule
+    patience=20, seed=42, name='traffic_light_v1')
+\end{minted}
+
+\begin{keyconcept}[: the key hyperparameters, in plain words]
+\begin{itemize}
+  \item \textbf{epoch} --- one full pass over the training set. We allowed
+        up to $50$.
+  \item \textbf{batch} ($=16$) --- how many images are processed together
+        before the weights update once.
+  \item \textbf{imgsz} ($=1280$) --- images are fed at $1280$ px so the
+        tiny lights survive; lower res would erase them.
+  \item \textbf{transfer learning} --- we start from \texttt{yolov8s.pt},
+        already trained on COCO (80 classes), and \emph{fine-tune} it on
+        our 3 classes. The network already knows edges/shapes, so it
+        learns fast.
+  \item \textbf{patience} ($=20$) --- ``early stopping'': if validation
+        mAP does not improve for $20$ epochs, stop and keep the best
+        weights.
+  \item \textbf{seed} ($=42$) --- fixes randomness so the run is
+        reproducible.
+\end{itemize}
+\end{keyconcept}
+
+\begin{analogy}[: transfer learning]
+You do not teach a new employee to read before teaching them your filing
+system. They already read (COCO pre-training); you just teach the
+specifics of your office (the 3 traffic-light classes). Far faster than
+raising someone from birth.
+\end{analogy}
+
+\section{What the three losses mean}
+YOLOv8 minimises a sum of three losses (their weights are in
+\texttt{args.yaml}: \texttt{box}$=7.5$, \texttt{cls}$=0.5$,
+\texttt{dfl}$=1.5$):
+\begin{itemize}
+  \item \textbf{box\_loss} --- how wrong the box \emph{position/size} is.
+  \item \textbf{cls\_loss} --- how wrong the \emph{class}
+        (go/stop/warning) is.
+  \item \textbf{dfl\_loss} (Distribution Focal Loss) --- sharpens the
+        \emph{exact edges} of the box.
+\end{itemize}
+A good run shows all three falling on both train and val curves.
+
+\section{Reading the training log}
+The real progression from \texttt{results.csv}:
+
+\begin{table}[H]\centering
+\caption{Validation mAP@0.5 at key epochs (from \texttt{results.csv}).}
+\label{tab:milestones}
+\begin{tabular}{cll}
+\toprule
+Epoch & mAP@0.5 & Meaning \\
+\midrule
+$1$  & $0.664$ & barely started \\
+$10$ & $0.706$ & rapid learning \\
+$\mathbf{27}$ & $\mathbf{0.768}$ & \textbf{best --- saved as best.pt} \\
+$47$ & $0.667$ & early-stopped (no gain for 20 epochs) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{keyconcept}[: why \texttt{best.pt} is epoch 27, not epoch 47]
+YOLO saves two files: \texttt{last.pt} (most recent) and
+\texttt{best.pt} (the epoch with the highest validation mAP). Validation
+performance peaked at epoch~27 ($\text{mAP@0.5}=0.768$,
+$\text{mAP@0.5:0.95}=0.379$) and then drifted down --- a sign of mild
+\textbf{overfitting}. Early stopping triggered at epoch~47. We deploy
+\texttt{best.pt} (epoch~27), never the last one. Total training time
+$\approx$ 2\,h\,14\,min on an RTX~5090.
+\end{keyconcept}
+
+\maybefig{runs/traffic_light_v1/training_curves.png}{0.95}{Top row: the three losses (train
+solid, val dashed) all trending down. Bottom row: mAP@0.5, mAP@0.5:0.95,
+and precision/recall. The red dotted line marks the best epoch.}{fig:curves}
+
+\begin{warningbox}
+Notice the validation losses are \emph{noisier} and flatten higher than
+the training losses --- normal, but the widening gap after epoch~27 is the
+overfitting signal that justifies keeping the early-stopped best weights.
+\end{warningbox}
+
+% ====================================================================
+\chapter{Evaluation: Did It Actually Work?}
+\label{ch:eval}
+% ====================================================================
+
+\section{The four metrics, demystified}
+\begin{keyconcept}[: precision, recall, mAP]
+For a class:
+\begin{itemize}
+  \item \textbf{Precision} $=\dfrac{TP}{TP+FP}$ --- of the boxes the model
+        \emph{claimed}, how many were right. Low precision $=$ ``cries
+        wolf.''
+  \item \textbf{Recall} $=\dfrac{TP}{TP+FN}$ --- of the real lights, how
+        many it \emph{found}. Low recall $=$ ``misses things.''
+  \item \textbf{mAP@0.5} --- mean Average Precision with the IoU bar at
+        $0.5$; the headline accuracy score, averaged over classes.
+  \item \textbf{mAP@0.5:0.95} --- the average of mAP at IoU thresholds
+        $0.5,0.55,\dots,0.95$. Much stricter (the box must be
+        \emph{very} tight), so it is always lower.
+\end{itemize}
+($TP$ = true positive, $FP$ = false positive, $FN$ = missed object.)
+\end{keyconcept}
+
+\begin{analogy}
+A fisherman's net. \textbf{Precision}: of everything in the net, how much
+is actually fish (not boots)? \textbf{Recall}: of all the fish in the
+lake, how many did the net catch? You usually trade one for the other.
+\end{analogy}
+
+\section{Per-class results}
+Table~\ref{tab:results} is the project's own per-class breakdown
+(CELL~23, validation set, \texttt{best.pt}). The overall row matches the
+epoch-27 figures in \texttt{results.csv}.
+
+\begin{table}[H]\centering
+\caption{Per-class metrics for \texttt{best.pt} (validation set).}
+\label{tab:results}
+\begin{tabular}{lrrr}
+\toprule
+Class & Precision & Recall & mAP@0.5 \\
+\midrule
+\texttt{go}      & $0.942$ & $0.559$ & $0.645$ \\
+\texttt{stop}    & $0.790$ & $0.959$ & $0.816$ \\
+\texttt{warning} & $0.891$ & $0.821$ & $0.843$ \\
+\midrule
+\textbf{ALL}     & $0.874$ & $0.780$ & $0.768$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{How to read this like an examiner.}
+\begin{itemize}
+  \item \texttt{stop} has \textbf{recall $0.959$} --- the model almost
+        never \emph{misses} a red light. For safety, this is the single
+        most important number, and it is excellent.
+  \item \texttt{go} has high precision ($0.942$) but \textbf{low recall
+        ($0.559$)} --- when it says ``green'' it is usually right, but it
+        \emph{misses} many green lights. The notebook flags this as the
+        top weakness to fix.
+  \item \texttt{warning} did \emph{well} ($\text{mAP}=0.843$,
+        recall $0.821$) --- direct evidence that the oversampling in
+        Chapter~\ref{ch:hardproblems} worked.
+\end{itemize}
+
+\maybefig{runs/traffic_light_v1/test_metrics.png}{0.8}{Per-class precision, recall and mAP@0.5
+as bars. The dashed line at $0.8$ is a quality reference.}{fig:testmetrics}
+
+\section{The confusion matrix}
+\begin{keyconcept}[: confusion matrix]
+A grid where each column is a \emph{true} class and each row is the
+\emph{predicted} class (plus a ``background'' row/column for
+misses/false alarms). Bright cells on the diagonal $=$ correct. Bright
+\emph{off-diagonal} cells $=$ the model confusing one class for another;
+the \texttt{background} column shows real lights that were \emph{missed}.
+\end{keyconcept}
+
+\maybefig{runs/traffic_light_v1/confusion_matrix_normalized.png}{0.7}{Normalised confusion
+matrix for \texttt{best.pt}. A strong diagonal means the three colours
+are rarely confused with each other; the bulk of error is the
+\texttt{background} row --- i.e.\ small lights missed entirely, consistent
+with \texttt{go}'s low recall.}{fig:cm}
+
+\section{Qualitative check --- look at predictions}
+Numbers can lie; pictures rarely do. CELL~20 runs the model on random
+test frames at a confidence threshold of $0.30$.
+
+\maybefig{runs/traffic_light_v1/sample_inference.png}{0.95}{Detections on test frames
+(confidence $\ge 0.30$). Each box shows the predicted class and
+confidence.}{fig:inference}
+
+% ====================================================================
+\chapter{Inference and Deployment}
+\label{ch:deploy}
+% ====================================================================
+
+\section{Confidence threshold and NMS}
+\label{sec:nms}
+\begin{keyconcept}[: confidence threshold]
+For every candidate box the model outputs a \textbf{confidence}
+($0$--$1$). We keep only boxes above a threshold --- the project uses
+\textbf{$0.30$}. Higher $=$ fewer, surer boxes (precision up, recall
+down); lower $=$ more boxes (recall up, more false alarms).
+\end{keyconcept}
+
+\begin{keyconcept}[: Non-Maximum Suppression (NMS)]
+The model often fires several overlapping boxes on one light.
+\textbf{NMS} keeps the highest-confidence box and deletes others that
+overlap it by more than an IoU threshold (here $0.7$, from
+\texttt{args.yaml}). This is why you see one clean box per light, not ten.
+\end{keyconcept}
+
+\begin{analogy}
+Ten witnesses describe the same parked car. NMS keeps the most confident
+witness's account and discards the nine near-duplicates, so you record
+\emph{one} car, not ten.
+\end{analogy}
+
+\section{Single image, and video from frames}
+CELL~20 does single images; CELL~21 stitches sequential frames into an
+annotated video. On \texttt{daySequence1} ($300$ frames $=10$\,s at
+$30$\,fps) the model produced $614$ detections, averaging $2.0$ per
+frame. CELL~21b runs on \emph{your own} video --- a real $1920\times1080$
+clip of $5{,}403$ frames processed at $\approx 92$ fps with $10{,}686$
+detections.
+
+\section{ONNX export}
+\begin{keyconcept}[: what ONNX is]
+\textbf{ONNX} (Open Neural Network Exchange) is a universal model file
+format. Exporting \texttt{best.pt} (PyTorch) to \texttt{best.onnx} lets
+the model run \emph{without} Python or PyTorch --- e.g.\ on a phone, in a
+browser, or in C++ --- via lightweight ``ONNX Runtime.''
+\end{keyconcept}
+
+\begin{minted}{python}
+# CELL 22
+model.export(format='onnx', imgsz=1280, dynamic=False,
+             opset=17, simplify=True)
+\end{minted}
+
+\noindent
+Result (CELL~22 output): \texttt{best.pt} ($22.6$\,MB) $\rightarrow$
+\texttt{best.onnx} ($45.3$\,MB), input named \texttt{images}
+$(1,3,1280,1280)$, output \texttt{output0}. Validation passed.
+
+\section{Three deployment routes (CELL~22 notes)}
+\begin{itemize}
+  \item \textbf{Android app} --- bundle \texttt{best.onnx} as an asset,
+        run it with ONNX Runtime Mobile on camera frames. Works offline,
+        no internet, all on-device.
+  \item \textbf{Website, in-browser} --- ONNX Runtime Web (WASM) runs the
+        model in the visitor's browser. No server, privacy-friendly,
+        but limited by the user's device.
+  \item \textbf{Website, server backend} --- the browser sends the image
+        to an API; the server runs the model and returns boxes. Most
+        powerful hardware, but needs a server and a network round-trip.
+\end{itemize}
+
+\begin{warningbox}
+The model was trained at \texttt{imgsz=1280}, which is heavy for phones.
+The notebook's own advice is to \emph{re-export at \texttt{imgsz=640}}
+for mobile/web --- roughly $4\times$ faster --- accepting a small accuracy
+drop on the smallest lights.
+\end{warningbox}
+
+\section{Honest limitations and next steps}
+Straight from the project summary, the known weaknesses are: misses
+\emph{large} close-up lights (never seen in LISA); \texttt{go} recall is
+only $0.559$; night data is under-represented; and $1280$ px is slow for
+edge devices. Sensible improvements: add your own annotated frames, try
+YOLOv8m, add night augmentation, and fine-tune on domain video.
+
+% ====================================================================
+\chapter{Viva Preparation}
+\label{ch:viva}
+% ====================================================================
+Answer out loud. Each answer below is deliberately short enough to say in
+$20$--$40$ seconds.
+
+\section{Theme A --- CNN \& detection basics}
+\begin{enumerate}
+  \item \textbf{What is the difference between classification and
+        detection?} Classification gives one label for the whole image;
+        detection gives a box \emph{and} a label for every object. We do
+        detection.
+  \item \textbf{What is a convolution?} A small kernel slid across the
+        image computing weighted sums, producing a feature map; it
+        detects local patterns and is reused at every position
+        (translation invariance).
+  \item \textbf{Why a CNN and not a plain neural network?} Plain
+        networks ignore spatial structure and need far too many
+        parameters; CNNs share weights and exploit locality.
+  \item \textbf{What is a bounding box and how is it stored here?} The
+        tightest rectangle around an object; stored in YOLO as
+        normalised $(x_c,y_c,w,h)$ in $[0,1]$.
+  \item \textbf{What is IoU?} Intersection-over-union of predicted and
+        true boxes; the overlap quality measure used for matching and NMS.
+\end{enumerate}
+
+\section{Theme B --- why YOLO / the architecture}
+\begin{enumerate}\setcounter{enumi}{5}
+  \item \textbf{Why YOLO over Faster R-CNN?} YOLO is one-stage and
+        real-time --- essential for a moving car --- with competitive
+        accuracy.
+  \item \textbf{What does ``anchor-free'' mean?} YOLOv8 predicts box
+        geometry directly instead of refining pre-set anchor shapes;
+        simpler, fewer hyperparameters.
+  \item \textbf{Backbone, neck, head?} Backbone extracts multi-scale
+        features; neck (FPN/PAN) fuses fine and coarse maps; head outputs
+        boxes $+$ class scores.
+  \item \textbf{Why YOLOv8\emph{s} and not nano or medium?} EDA showed
+        $99.9\%$ tiny/small objects; ``s'' detects small objects far
+        better than nano while fitting our GPU, where medium was
+        unnecessary.
+  \item \textbf{How many parameters?} About $11.1$ million
+        ($11{,}126{,}745$), $28.4$ GFLOPs.
+\end{enumerate}
+
+\section{Theme C --- data, leakage, imbalance}
+\begin{enumerate}\setcounter{enumi}{10}
+  \item \textbf{Why map 14 classes to 3?} The extra labels are
+        driving-irrelevant and would starve each class; 3 actions
+        (go/stop/warning) are what a car needs.
+  \item \textbf{What is data leakage and how did you prevent it?}
+        Train/test overlap that inflates scores. Frames in a clip are
+        near-identical, so we split by whole \emph{sequence} (15 train /
+        3 val) and verified no sequence is shared.
+  \item \textbf{What is class imbalance and your fix?} \texttt{warning}
+        was $\sim$3\%; we oversampled warning-dominant images $5\times$ to
+        $\sim$11.7\% of the train set.
+  \item \textbf{Doesn't oversampling cause overfitting?} It can; mosaic
+        and mixup augmentation place each repeated image in fresh
+        contexts to counter that.
+  \item \textbf{Why did stratified splitting fail?} Only $\sim$18
+        sequences exist and warning-dominant ones are rare, so some
+        strata had a single member; the code falls back to a plain split.
+\end{enumerate}
+
+\section{Theme D --- training \& metrics}
+\begin{enumerate}\setcounter{enumi}{15}
+  \item \textbf{What are the three losses?} box (position/size), cls
+        (class), dfl (edge sharpness).
+  \item \textbf{What is transfer learning here?} Start from
+        COCO-pretrained \texttt{yolov8s.pt} and fine-tune on 3 classes;
+        faster and better than training from scratch.
+  \item \textbf{Why is \texttt{best.pt} from epoch 27?} Validation mAP
+        peaked there ($0.768$) then declined (overfitting); early stopping
+        fired at epoch~47 but we keep the best.
+  \item \textbf{Define precision, recall, mAP@0.5, mAP@0.5:0.95.} See
+        Chapter~\ref{ch:eval}; recall $=$ fraction of real lights found,
+        precision $=$ fraction of claims that are correct, mAP $=$ mean
+        average precision at the stated IoU bar(s).
+  \item \textbf{Your overall scores?} mAP@0.5 $=0.768$, mAP@0.5:0.95
+        $=0.379$, precision $0.874$, recall $0.780$ (validation, epoch 27).
+\end{enumerate}
+
+\section{Theme E --- the confusion matrix \& errors}
+\begin{enumerate}\setcounter{enumi}{20}
+  \item \textbf{Which class is best and why does it matter?} \texttt{stop}
+        recall $=0.959$ --- safety-critical, and excellent: red lights are
+        rarely missed.
+  \item \textbf{Which class is weakest?} \texttt{go} recall $=0.559$ ---
+        many green lights missed; high precision means few false greens.
+  \item \textbf{Where does most error come from in the confusion
+        matrix?} The \texttt{background} row --- small/far lights missed
+        entirely --- not go/stop confusion.
+  \item \textbf{Is mAP@0.5:0.95 low ($0.379$) a problem?} It is a
+        \emph{strict} metric requiring very tight boxes on tiny objects;
+        for ``which colour, roughly where'' the $0.768$ mAP@0.5 is the
+        relevant number.
+\end{enumerate}
+
+\section{Theme F --- deployment, ethics, improvements}
+\begin{enumerate}\setcounter{enumi}{24}
+  \item \textbf{What is ONNX and why export?} A portable model format to
+        run without PyTorch --- on phones, browsers, or C++ via ONNX
+        Runtime.
+  \item \textbf{What is NMS and the thresholds used?} Removes duplicate
+        overlapping boxes (IoU $0.7$); we keep detections with confidence
+        $\ge 0.30$.
+  \item \textbf{Deployment options?} On-device Android (offline),
+        in-browser WASM (no server), or server API (most power).
+  \item \textbf{Safety/ethics concerns?} A missed red light is dangerous;
+        the model must be a \emph{driver aid}, not sole authority, and
+        needs validation in rain, glare, and night before any real use.
+  \item \textbf{Biggest real-world weakness?} It only saw small, mostly
+        daytime LISA lights; it under-performs on close-up lights and at
+        night.
+  \item \textbf{Three concrete improvements?} Add annotated domain
+        frames; try YOLOv8m; add night-specific augmentation (and
+        re-export at $640$ for speed).
+  \item \textbf{If you had one more week?} Raise \texttt{go} recall:
+        oversample go-dominant clips, tune augmentation, and lower the
+        confidence threshold while watching precision.
+\end{enumerate}
+
+\section{One-page cheat-sheet (memorise one line per topic)}
+\begin{keyconcept}[: the essentials]
+\begin{itemize}
+  \item \textbf{Task:} object detection (box $+$ label), not just
+        classification.
+  \item \textbf{Model:} YOLOv8s, one-stage, anchor-free, $11.1$M params,
+        fine-tuned from COCO.
+  \item \textbf{Data:} LISA, $20{,}535$ train / $22{,}481$ test images,
+        $14\to3$ classes (go/stop/warning), $99.9\%$ tiny objects.
+  \item \textbf{Key fix 1:} sequence-aware split $\Rightarrow$ no data
+        leakage.
+  \item \textbf{Key fix 2:} $5\times$ oversample \texttt{warning}
+        ($3\%\to12\%$).
+  \item \textbf{Training:} imgsz $1280$, batch $16$, up to $50$ epochs,
+        best at epoch $27$, early-stopped at $47$.
+  \item \textbf{Result:} mAP@0.5 $=0.768$; \texttt{stop} recall $0.959$
+        (great), \texttt{go} recall $0.559$ (weak).
+  \item \textbf{Deploy:} export to ONNX; phone / browser / server.
+\end{itemize}
+\end{keyconcept}
+
+% ====================================================================
+\chapter*{Glossary}
+\addcontentsline{toc}{chapter}{Glossary}
+% ====================================================================
+\begin{description}
+  \item[ADAS] Advanced Driver Assistance System --- safety tech that
+        helps a human driver.
+  \item[Anchor-free] Predicting boxes directly rather than refining
+        preset anchor shapes.
+  \item[Backbone/Neck/Head] Feature extractor / multi-scale fuser /
+        output predictor in a detector.
+  \item[Batch] Number of images processed before one weight update
+        ($16$ here).
+  \item[Bounding box] Rectangle around an object; YOLO stores it as
+        normalised $(x_c,y_c,w,h)$.
+  \item[CNN] Convolutional Neural Network --- a network built from
+        convolution layers.
+  \item[Confidence threshold] Minimum score to keep a detection
+        ($0.30$ here).
+  \item[Data leakage] Train/test contamination that inflates scores.
+  \item[Epoch] One full pass over the training data.
+  \item[IoU] Intersection over Union --- box overlap measure.
+  \item[mAP@0.5 / mAP@0.5:0.95] Mean Average Precision at one / a range
+        of IoU thresholds.
+  \item[NMS] Non-Maximum Suppression --- removes duplicate overlapping
+        boxes.
+  \item[ONNX] Portable model format for framework-free inference.
+  \item[Oversampling] Repeating rare-class examples to fight imbalance.
+  \item[Precision / Recall] Fraction of claims correct / fraction of real
+        objects found.
+  \item[Transfer learning] Fine-tuning a pretrained network on a new
+        task.
+  \item[YOLO] ``You Only Look Once'' --- a family of one-stage detectors.
+\end{description}
+
+% ====================================================================
+\begin{thebibliography}{9}
+\addcontentsline{toc}{chapter}{Bibliography}
+% ====================================================================
+\bibitem{ultralytics}
+Ultralytics, \emph{YOLOv8 Documentation}.
+\url{https://docs.ultralytics.com}.
+
+\bibitem{yolo}
+J.~Redmon, S.~Divvala, R.~Girshick, and A.~Farhadi,
+``You Only Look Once: Unified, Real-Time Object Detection,''
+\emph{CVPR}, 2016. \url{https://arxiv.org/abs/1506.02640}.
+
+\bibitem{lisa}
+M.~P.~Philipsen \emph{et al.}, ``The LISA Traffic Light Dataset,''
+University of California, San Diego.
+\url{https://www.kaggle.com/datasets/mbornoe/lisa-traffic-light-dataset}.
+
+\bibitem{coco}
+T.-Y.~Lin \emph{et al.}, ``Microsoft COCO: Common Objects in Context,''
+\emph{ECCV}, 2014. \url{https://cocodataset.org}.
+
+\bibitem{onnx}
+ONNX, \emph{Open Neural Network Exchange}. \url{https://onnx.ai}.
+\end{thebibliography}
+
+\end{document}

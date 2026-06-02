@@ -53,9 +53,9 @@ Transfer learning from large-scale datasets has been shown to be a highly effect
 
 The project follows a seven-stage pipeline: (1) dataset acquisition and format understanding, (2) exploratory data analysis, (3) label format conversion from Supervisely JSON to YOLO normalised text format, (4) sequence-aware data partitioning to prevent temporal leakage, (5) class imbalance correction through oversampling of warning-class sequences, (6) model training via transfer learning from COCO-pretrained YOLOv8s weights, and (7) model evaluation on the unseen test set and export to ONNX format for deployment. The overall system pipeline is illustrated in Figure~\ref{fig:pipeline}.
 
-\begin{figure}[ht]
+\begin{figure}[p]
     \begin{center}
-        \includegraphics[width=\textwidth]{Images/Diagrams/pipeline.png}
+        \includegraphics[width=0.92\textwidth,height=0.70\textheight,keepaspectratio]{Images/Diagrams/pipeline.png}
     \end{center}
     \caption{Overall system pipeline for traffic light detection.}
     \label{fig:pipeline}
