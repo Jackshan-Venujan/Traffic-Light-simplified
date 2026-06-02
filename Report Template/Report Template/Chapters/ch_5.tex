@@ -1,0 +1,23 @@
+\chapter{Conclusion}
+
+\section{Summary of Achievements}
+
+This project successfully developed an end-to-end deep learning pipeline for real-time traffic light state detection. The LISA Traffic Light Dataset, comprising over 42,000 annotated dashcam images, was processed from its original Supervisely JSON annotation format into the YOLO training format through a series of preprocessing stages including class consolidation, label format conversion, sequence-aware data partitioning, and class imbalance correction via oversampling.
+
+A YOLOv8s model pre-trained on the COCO dataset was fine-tuned on the three-class traffic light detection task, achieving an overall mAP@50 of 0.768 on the validation set and consistent performance on the 22,481-image unseen test set. The stop class reached a recall of 0.959, ensuring that the vast majority of red traffic lights --- the most safety-critical state --- are detected. The warning class, initially representing only 2.8\% of training instances, achieved an mAP@50 of 0.843 following oversampling, demonstrating the effectiveness of the imbalance correction strategy. The trained model was exported to ONNX format, enabling cross-platform deployment on Android devices, web browsers, and embedded systems.
+
+\section{Limitations}
+
+Three primary limitations were identified. First, the go class recall of 0.559 indicates that approximately 44\% of green traffic lights are missed. This is attributed to the visual similarity between green lights and ambient green elements in the scene, combined with their small pixel footprint at distance. Second, the model exhibits reduced detection performance on large or close-up traffic lights, as the LISA dataset was captured from a fixed dashcam perspective where traffic lights are consistently small. The model has not encountered the distribution of large bounding boxes that would arise from a different camera position or shorter driving distance. Third, the dataset is limited to US driving conditions; performance on traffic light styles, signage, and intersection layouts from other countries has not been evaluated.
+
+\section{Future Work}
+
+Several directions are identified for improving and extending this work. Upgrading from YOLOv8s to YOLOv8m or the recently released YOLO11s architecture is expected to yield a 3--6 point improvement in mAP@50 at the cost of additional training time. Collecting and annotating frames from a custom test video, which may contain larger traffic lights at closer range, would allow fine-tuning to address the domain mismatch identified in Section~5.2. Applying multi-scale training augmentation would expose the model to a broader range of object sizes during training. Extending the training duration with a cosine learning rate schedule and greater patience (patience = 50) may allow the model to escape the plateau observed at epoch 27. Finally, incorporating night-specific augmentations such as randomised brightness reduction would improve robustness under low-light conditions, where the dataset's night-time images (6,501 frames) are currently underrepresented in the training split.
+
+\section{Deployment Pathways}
+
+The trained model has been exported to ONNX format, enabling deployment beyond the Python development environment. On Android devices, the ONNX Runtime for Android library allows the model to perform inference on camera frames entirely on-device, without requiring an internet connection. For web-based applications, ONNX Runtime Web enables in-browser inference using WebAssembly, suitable for portfolio demonstrations and lightweight deployments. For production server deployments, a Python-based REST API using FastAPI can receive image uploads and return JSON-formatted detection results, which a front-end client renders as bounding box overlays. For mobile deployment specifically, re-exporting the model at a reduced input resolution of 640 pixels is recommended to reduce inference latency and memory requirements.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% END OF FILE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
