@@ -6,28 +6,8 @@
 **Training:** 47 epochs, best at epoch 27, 2 h 14 min on RTX 5090 32 GB
 **Overall mAP@50:** 0.768 | **Precision:** 0.874 | **Recall:** 0.780
 
----
 
-## Table of Contents
-
-1. [Project Overview](#1-project-overview)
-2. [Repository Structure](#2-repository-structure)
-3. [Dataset](#3-dataset)
-   - 3.1 [Raw Dataset Layout](#31-raw-dataset-layout)
-   - 3.2 [Annotation Format](#32-annotation-format)
-   - 3.3 [Class Mapping — 14 Raw Classes to 3 Semantic Classes](#33-class-mapping--14-raw-classes-to-3-semantic-classes)
-4. [Pipeline — All 23 Notebook Cells](#4-pipeline--all-23-notebook-cells)
-5. [Graphs and Chart Insights](#5-graphs-and-chart-insights)
-6. [Final Results](#6-final-results)
-7. [Model Accuracy Discussion](#7-model-accuracy-discussion)
-8. [Summary and Conclusion](#8-summary-and-conclusion)
-9. [Problems Faced and Solutions](#9-problems-faced-and-solutions)
-10. [Ways to Improve Accuracy](#10-ways-to-improve-accuracy)
-11. [Deployment](#11-deployment)
-
----
-
-## 1. Project Overview
+## Project Overview
 
 This project trains a YOLOv8s object detection model to identify traffic lights in real-world dashcam footage and classify each detected light as one of three states:
 
