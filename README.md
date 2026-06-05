@@ -102,31 +102,31 @@ The LISA dataset was downloaded in Supervisely JSON format, which is different f
 
 ### Cell 4 — Load All Annotations into a DataFrame
 
-**What:** Defines `parse_annotation_file()`, which reads one `.jpg.json` file and extracts all bounding box rows. Loops over all 20,535 train annotation files with a `tqdm` progress bar. Loads results into a `pandas` DataFrame with columns: `image_file`, `class_title`, `x1`, `y1`, `x2`, `y2`, `img_width`, `img_height`.
+Defines `parse_annotation_file()`, which reads one `.jpg.json` file and extracts all bounding box rows. Loops over all 20,535 train annotation files with a `tqdm` progress bar. Loads results into a `pandas` DataFrame with columns: `image_file`, `class_title`, `x1`, `y1`, `x2`, `y2`, `img_width`, `img_height`.
 
-**Key implementation detail:** `ann_path.stem` (pathlib) removes only the `.json` extension, leaving `.jpg` — which is exactly the correct image filename. The glob pattern must be `*.jpg.json`, not `*.json`.
+`ann_path.stem` (pathlib) removes only the `.json` extension, leaving `.jpg` — which is exactly the correct image filename. The glob pattern must be `*.jpg.json`, not `*.json`.
 
-**Result:** ~219,832 rows — one per bounding box annotation.
+~219,832 rows — one per bounding box annotation.
 
-**Why:** All downstream analysis (class distribution, box size statistics, train/val split) depends on this DataFrame.
+All downstream analysis (class distribution, box size statistics, train/val split) depends on this DataFrame.
 
 ---
 
 ### Cell 5 — Map 14 Classes to 3 + Visualize
 
-**What:** Creates a `CLASS_MAP` dictionary that maps each raw class name to `go`, `stop`, or `warning`. Adds a `class_mapped` column to the DataFrame. Draws a **3×3 grid** of real sample images (one row per class) with bounding boxes drawn directly on the images so the user can visually confirm what each class looks like.
+Creates a `CLASS_MAP` dictionary that maps each raw class name to `go`, `stop`, or `warning`. Adds a `class_mapped` column to the DataFrame. Draws a **3×3 grid** of real sample images (one row per class) with bounding boxes drawn directly on the images so the user can visually confirm what each class looks like.
 
-**Key implementation detail:** OpenCV draws in BGR colour order. Matplotlib expects RGB. The image must be kept in BGR while all boxes are drawn, then converted BGR→RGB at the very end before displaying. Converting too early makes stop boxes appear blue and warning boxes appear purple.
+OpenCV draws in BGR colour order. Matplotlib expects RGB. The image must be kept in BGR while all boxes are drawn, then converted BGR→RGB at the very end before displaying. Converting too early makes stop boxes appear blue and warning boxes appear purple.
 
-**Why:** Visual confirmation that the mapping is correct before any conversion happens.
+Visual confirmation that the mapping is correct before any conversion happens.
 
 ---
 
 ### Cell 6 — Class Distribution Bar Chart
 
-**What:** Counts annotations per mapped class, draws a bar chart, prints exact numbers and percentages.
+Counts annotations per mapped class, draws a bar chart, prints exact numbers and percentages.
 
-**Result (approximate):**
+**Resul:**
 
 | Class | Count | Percentage |
 |-------|-------|------------|
@@ -134,7 +134,7 @@ The LISA dataset was downloaded in Supervisely JSON format, which is different f
 | go | ~99,000 | ~45% |
 | warning | ~6,200 | ~2.8% |
 
-**Why:** This chart reveals a severe **class imbalance**: the stop:warning ratio is approximately 19:1. A model trained on imbalanced data will learn to detect stop and go lights well but largely ignore warning lights because getting warning wrong barely affects the overall loss. This chart is the evidence that justifies the oversampling step in Cell 12.
+This chart reveals a severe **class imbalance**: the stop:warning ratio is approximately 19:1. A model trained on imbalanced data will learn to detect stop and go lights well but largely ignore warning lights because getting warning wrong barely affects the overall loss. This chart is the evidence that justifies the oversampling step in Cell 12.
 
 ---
 
