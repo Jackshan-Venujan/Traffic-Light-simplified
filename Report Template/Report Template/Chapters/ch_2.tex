@@ -2,7 +2,7 @@
 
 \section{LISA Traffic Light Dataset}
 
-The Large Scale Illumination and Scene Adaptive (LISA) Traffic Light Dataset is a publicly available resource for traffic light detection research. The version used in this project was obtained via the Data Ninja platform in Supervisely JSON format, comprising 20,535 training images and 22,481 test images at a resolution of 1280$\times$960 pixels. The images represent sequential video frames captured from a forward-facing dashcam mounted in a moving vehicle, covering both daytime (14,034 frames) and night-time (6,501 frames) conditions across multiple US traffic scenarios.
+The LISA Traffic Light Dataset is a publicly available resource for traffic light detection research. The version used in this project was obtained via the Data Ninja platform in Supervisely JSON format, comprising 20,535 training images and 22,481 test images at a resolution of 1280$\times$960 pixels. The images represent sequential video frames captured from a forward-facing dashcam mounted in a moving vehicle, covering both daytime (14,034 frames) and night-time (6,501 frames) conditions across multiple US traffic scenarios.
 
 \section{Annotation Format}
 
@@ -60,22 +60,31 @@ Figure~\ref{fig:class_samples} presents representative samples from each of the 
 
 The 14 original class labels were consolidated into three semantic classes to reduce task complexity and reflect the actual traffic signal states that a driver assistance system must respond to. Table~\ref{tb:classmap} presents the complete mapping.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \caption{Mapping of 14 original LISA class labels to three semantic classes.}
 \label{tb:classmap}
-\begin{center}
-\begin{tabular}{l|l|c}
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.56\textwidth} l c}
+\toprule
 \textbf{Original Class Label} & \textbf{Semantic Class} & \textbf{Class ID} \\
-\hline
-go, go traffic light                        & go      & 0 \\
-go left, go left traffic light              & go      & 0 \\
-go forward, go forward traffic light        & go      & 0 \\
-stop, stop traffic light                    & stop    & 1 \\
-stop left, stop left traffic light          & stop    & 1 \\
-warning, warning traffic light              & warning & 2 \\
-warning left, warning left traffic light    & warning & 2 \\
+\midrule
+go & go & 0 \\
+go traffic light & go & 0 \\
+go left & go & 0 \\
+go left traffic light & go & 0 \\
+go forward & go & 0 \\
+go forward traffic light & go & 0 \\
+stop & stop & 1 \\
+stop traffic light & stop & 1 \\
+stop left & stop & 1 \\
+stop left traffic light & stop & 1 \\
+warning & warning & 2 \\
+warning traffic light & warning & 2 \\
+warning left & warning & 2 \\
+warning left traffic light & warning & 2 \\
+\bottomrule
 \end{tabular}
-\end{center}
 \end{table}
 
 It should be noted that the classes ``go forward'' and ``go forward traffic light'' appear exclusively in the test annotation split and are handled correctly during test evaluation by the same mapping applied to the training data.
@@ -107,7 +116,7 @@ where $W$ and $H$ denote the image width and height respectively. All values are
     \begin{center}
         \includegraphics[width=\textwidth]{Images/Chapter2/yolo_label_check.png}
     \end{center}
-    \caption{Visual verification of YOLO label conversion: converted bounding boxes overlaid on original images confirming correct spatial alignment.}
+    \caption[YOLO label conversion verification]{Visual verification of YOLO label conversion: converted bounding boxes overlaid on original images confirming correct spatial alignment.}
     \label{fig:label_check}
 \end{figure}
 
@@ -127,7 +136,7 @@ To prevent this, a sequence-level 85/15 split was applied: all frames belonging 
 
 \section{Class Imbalance Correction}
 
-To address the 19:1 stop-to-warning imbalance identified in Section~\ref{sec:eda-class-dist}, an image-level oversampling strategy was applied to the warning class. Images from clips where warning lights were the dominant annotation were duplicated by creating symbolic file links, targeting a warning class representation of approximately 10\% of the total training images. Symbolic links were used rather than physical file copies to avoid duplicating the dataset storage, which would require an additional $\sim$20\,GB. Following oversampling, the training set comprised 17,274 images.
+To address the 19:1 stop-to-warning imbalance identified in Section~\ref{sec:eda-class-dist}, an image-level oversampling strategy was applied to the warning class. Images from clips where warning lights were the dominant annotation were duplicated by creating symbolic file links, targeting a warning class representation of approximately 10\% of the total training images. Symbolic links were used rather than physical file copies to avoid duplicating the dataset storage, which would require an additional $\sim$20\,GB. Following the sequence-level split, the training set comprised 17,274 unique images, and warning-class oversampling was implemented without increasing the storage footprint.
 
 Figure~\ref{fig:sample_boxes} shows a sample of annotated images from the dataset, illustrating the diversity of lighting conditions and scene contexts encountered in training.
 

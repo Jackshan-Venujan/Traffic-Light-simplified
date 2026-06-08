@@ -16,20 +16,22 @@ Four standard object detection metrics were used to evaluate model performance.
 
 Table~\ref{tb:val_results} presents the per-class and overall performance of the best model (best.pt, epoch 27) evaluated on the 4,877-image validation set.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \caption{Per-class performance on the validation set (best.pt, epoch 27).}
 \label{tb:val_results}
-\begin{center}
-\begin{tabular}{l|c|c|c|c}
+\centering
+\small
+\begin{tabular}{l c c c c}
+\toprule
 \textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{mAP@50} & \textbf{mAP@50-95} \\
-\hline
-go      & 0.942 & 0.559 & 0.645 & 0.348 \\
-stop    & 0.790 & 0.959 & 0.816 & 0.417 \\
+\midrule
+go & 0.942 & 0.559 & 0.645 & 0.348 \\
+stop & 0.790 & 0.959 & 0.816 & 0.417 \\
 warning & 0.891 & 0.821 & 0.843 & 0.371 \\
-\hline
+\midrule
 \textbf{Overall} & \textbf{0.874} & \textbf{0.780} & \textbf{0.768} & \textbf{0.379} \\
+\bottomrule
 \end{tabular}
-\end{center}
 \end{table}
 
 The stop class achieves the highest recall (0.959), meaning that 95.9\% of red traffic lights in the validation images were successfully detected. This is the most safety-critical result, as failing to detect a stop light carries the highest risk in a driver assistance application. The warning class, despite representing only 2.8\% of the original training data, achieves an mAP@50 of 0.843 --- demonstrating that the oversampling strategy described in Section~2.7 effectively compensated for the class imbalance. The go class exhibits the lowest mAP@50 (0.645) and recall (0.559), reflecting the inherent difficulty of detecting green lights, which are small, sometimes occluded, and visually similar to ambient green elements in the scene.
