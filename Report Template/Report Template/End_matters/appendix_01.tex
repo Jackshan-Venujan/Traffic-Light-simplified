@@ -4,60 +4,67 @@ This appendix provides details of the hardware and software environment used dur
 
 \section{Hardware Specifications}
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \caption{Hardware used for model training and evaluation.}
 \label{tb:hardware}
-\begin{center}
-\begin{tabular}{l|l}
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.48\textwidth} >{\raggedright\arraybackslash}p{0.40\textwidth}}
+\toprule
 \textbf{Component} & \textbf{Specification} \\
-\hline
+\midrule
 GPU & NVIDIA GeForce RTX 5090 \\
 GPU VRAM & 32\,GB GDDR7 \\
 Peak VRAM usage during training & 15.4\,GB \\
 Total training time & 2 hours 14 minutes \\
+\bottomrule
 \end{tabular}
-\end{center}
 \end{table}
 
 \section{Software Environment}
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \caption{Software versions used in this project.}
 \label{tb:software}
-\begin{center}
-\begin{tabular}{l|l}
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.48\textwidth} >{\raggedright\arraybackslash}p{0.40\textwidth}}
+\toprule
 \textbf{Package} & \textbf{Version} \\
-\hline
+\midrule
 Python & 3.10.13 \\
 PyTorch & 2.9.0+cu128 \\
 Ultralytics (YOLOv8) & 8.3.222 \\
 OpenCV & 4.x \\
 CUDA & 12.8 \\
 Operating System & Linux (Ubuntu) \\
+\bottomrule
 \end{tabular}
-\end{center}
 \end{table}
 
 \section{Dataset Statistics}
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \caption{LISA Traffic Light Dataset statistics used in this project.}
 \label{tb:dataset}
-\begin{center}
-\begin{tabular}{l|r}
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.54\textwidth} >{\raggedright\arraybackslash}p{0.28\textwidth}}
+\toprule
 \textbf{Property} & \textbf{Value} \\
-\hline
-Training images (original) & 20,535 \\
-Training images (after oversampling) & 17,274 \\
+\midrule
+Training images (original train split) & 20,535 \\
+Training images after sequence split (unique images) & 17,274 \\
 Validation images & 4,877 \\
 Test images & 22,481 \\
+Warning-class oversampling & Symbolic links to selected training images \\
 Total annotated bounding boxes (training) & $\approx$219,832 \\
 Image resolution & 1280 $\times$ 960 pixels \\
 Annotation format & Supervisely JSON (.jpg.json) \\
 Semantic classes & 3 (go, stop, warning) \\
 Original class labels & 14 \\
+\bottomrule
 \end{tabular}
-\end{center}
 \end{table}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

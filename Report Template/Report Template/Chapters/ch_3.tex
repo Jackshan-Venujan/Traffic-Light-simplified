@@ -30,26 +30,28 @@ During fine-tuning, 349 of the 355 weight parameter groups were transferred from
 
 Table~\ref{tb:config} summarises the key hyperparameters used during training.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \caption{Training configuration and hyperparameters.}
 \label{tb:config}
-\begin{center}
-\begin{tabular}{l|l|l}
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.32\textwidth} >{\raggedright\arraybackslash}p{0.20\textwidth} >{\raggedright\arraybackslash}p{0.38\textwidth}}
+\toprule
 \textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
-\hline
-Input resolution (imgsz) & 1280\,px      & Preserves detail in small traffic lights \\
-Batch size               & 16            & Safe VRAM usage on RTX 5090 ($\sim$15\,GB) \\
-Maximum epochs           & 50            & Sufficient for convergence with early stopping \\
-Early stopping patience  & 20            & Halts training if no mAP improvement for 20 epochs \\
-Mosaic augmentation      & 1.0           & Combines 4 images; increases object density \\
-Mixup augmentation       & 0.1           & Blends image pairs; improves generalisation \\
-Horizontal flip          & 0.5           & Mirrors scenes; handles left/right light positions \\
-Initial learning rate    & 0.01          & Standard SGD starting point \\
-Optimiser                & SGD           & Selected automatically by Ultralytics \\
-AMP                      & Enabled       & Halves VRAM usage via 16-bit arithmetic \\
-GPU                      & RTX 5090 (32\,GB VRAM) & \\
+\midrule
+Input resolution (imgsz) & 1280\,px & Preserves detail in small traffic lights \\
+Batch size & 16 & Safe VRAM usage on RTX 5090 ($\sim$15\,GB) \\
+Maximum epochs & 50 & Sufficient for convergence with early stopping \\
+Early stopping patience & 20 & Halts training if no mAP improvement for 20 epochs \\
+Mosaic augmentation & 1.0 & Combines 4 images; increases object density \\
+Mixup augmentation & 0.1 & Blends image pairs; improves generalisation \\
+Horizontal flip & 0.5 & Mirrors scenes; handles left/right light positions \\
+Initial learning rate & 0.01 & Standard SGD starting point \\
+Optimiser & SGD & Selected automatically by Ultralytics \\
+AMP & Enabled & Halves VRAM usage via 16-bit arithmetic \\
+GPU & RTX 5090 (32\,GB VRAM) & Supports large-resolution batches without out-of-memory errors \\
+\bottomrule
 \end{tabular}
-\end{center}
 \end{table}
 
 \section{Training Process and Convergence}
@@ -62,7 +64,7 @@ YOLOv8 optimises three loss components simultaneously during training. Box loss 
     \begin{center}
         \includegraphics[width=\textwidth]{Images/Chapter3/training_curves.png}
     \end{center}
-    \caption{Training and validation loss curves (box loss, classification loss, DFL loss) alongside accuracy metrics (mAP@50, mAP@50-95, Precision, Recall) across 47 training epochs. The red dotted vertical line marks epoch 27, where the best model was saved.}
+    \caption[Training and validation curves]{Training and validation loss curves (box loss, classification loss, DFL loss) alongside accuracy metrics (mAP@50, mAP@50-95, Precision, Recall) across 47 training epochs. The red dotted vertical line marks epoch 27, where the best model was saved.}
     \label{fig:curves}
 \end{figure}
 
