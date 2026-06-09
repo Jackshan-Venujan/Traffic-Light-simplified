@@ -1,1 +1,2 @@
-/home/auto_drive/Desktop/Traffic------new/yolo_dataset/labels/train_all/nightClip5--01077.txt
+2 0.474609 0.357292 0.010156 0.020833
+2 0.473828 0.358333 0.007031 0.008333

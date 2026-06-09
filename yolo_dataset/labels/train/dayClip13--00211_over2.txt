@@ -1,1 +1,2 @@
-/home/auto_drive/Desktop/Traffic------new/yolo_dataset/labels/train_all/dayClip13--00211.txt
+2 0.401563 0.027604 0.037500 0.055208
+2 0.401563 0.024479 0.012500 0.015625
