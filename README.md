@@ -140,11 +140,11 @@ This chart reveals a severe **class imbalance**: the stop:warning ratio is appro
 
 ### Cell 7 — Bounding Box Size Analysis
 
-**What:** Calculates width and height in pixels for every bounding box. Draws a scatter plot of width vs height and a histogram of box areas. Classifies boxes by COCO standards (Tiny: <32px, Small: 32–96px, Medium: 96–224px, Large: >224px). Prints mean dimensions.
+Calculates width and height in pixels for every bounding box. Draws a scatter plot of width vs height and a histogram of box areas. Classifies boxes by COCO standards (Tiny: <32px, Small: 32–96px, Medium: 96–224px, Large: >224px). Prints mean dimensions.
 
-**Result:** Mean bounding box: 20 × 33 pixels on a 1280×960 image (0.05% of image area). Approximately **96% of boxes are Tiny or Small** by COCO standards.
+Mean bounding box: 20 × 33 pixels on a 1280×960 image (0.05% of image area). Approximately **96% of boxes are Tiny or Small** by COCO standards.
 
-**Why:** This is the quantitative justification for two key training decisions:
+This is the quantitative justification for two key training decisions:
 1. **Using YOLOv8s over YOLOv8n** — the `s` (small) variant has a deeper feature pyramid network (FPN) that extracts finer spatial details, which is critical for detecting very small objects.
 2. **Using `imgsz=1280` instead of the default 640** — downscaling a 1280×960 image to 640px makes 20×33px boxes only 10×17px, which is below reliable detection thresholds. Keeping images at 1280px gives the model more pixels to work with.
 
@@ -152,23 +152,23 @@ This chart reveals a severe **class imbalance**: the stop:warning ratio is appro
 
 ### Cell 8 — Sample Images with Bounding Boxes
 
-**What:** Picks 8 representative images from the dataset and draws annotated boxes (green = go, red = stop, orange = warning) on each. Displays them in a 2×4 grid.
+Picks 8 representative images from the dataset and draws annotated boxes (green = go, red = stop, orange = warning) on each. Displays them in a 2×4 grid.
 
-**Why:** A final visual sanity check — at this point class mapping, coordinate parsing, and colour conversion are all working together. If any step had a bug, the boxes would be misaligned or the wrong colour.
+A final visual sanity check — at this point class mapping, coordinate parsing, and colour conversion are all working together. If any step had a bug, the boxes would be misaligned or the wrong colour.
 
 ---
 
 ### Cell 9 — Create YOLO Directory Structure
 
-**What:** Creates the `yolo_dataset/` folder tree: `images/train`, `images/val`, `images/test`, `labels/train`, `labels/val`, `labels/test`, `labels/train_all`.
+Creates the `yolo_dataset/` folder tree: `images/train`, `images/val`, `images/test`, `labels/train`, `labels/val`, `labels/test`, `labels/train_all`.
 
-**Why:** YOLOv8 requires this exact directory layout. It finds images by looking in `images/` and expects corresponding label files in the parallel `labels/` folder with the same filename (different extension). Without this structure, training fails immediately.
+YOLOv8 requires this exact directory layout. It finds images by looking in `images/` and expects corresponding label files in the parallel `labels/` folder with the same filename (different extension). Without this structure, training fails immediately.
 
 ---
 
 ### Cell 10 — Convert JSON Annotations to YOLO Format
 
-**What:** Defines `json_to_yolo_lines()`, which reads a `.jpg.json` annotation file and converts each bounding box to **YOLO text format**.
+Defines `json_to_yolo_lines()`, which reads a `.jpg.json` annotation file and converts each bounding box to **YOLO text format**.
 
 **YOLO format (one line per bounding box):**
 ```
@@ -189,35 +189,35 @@ height   = (y2 - y1) / img_height
 
 Output label file: `ann_path.name.replace('.jpg.json', '.txt')` — e.g., `dayClip1--00001.jpg.json` → `dayClip1--00001.txt`.
 
-**Why:** YOLOv8 cannot read Supervisely JSON. It only reads its own `.txt` label format. This cell is the central data conversion step.
+YOLOv8 cannot read Supervisely JSON. It only reads its own `.txt` label format. This cell is the central data conversion step.
 
 ---
 
 ### Cell 11 — Sequence-Aware Train / Validation Split (85 / 15)
 
-**What:** Splits training data into a training set (85%) and a validation set (15%) using **sequence-aware splitting**.
+Splits training data into a training set (85%) and a validation set (15%) using **sequence-aware splitting**.
 
 **The problem:** The LISA dataset is dashcam footage. Consecutive frames (e.g., `dayClip5--00042.jpg`, `dayClip5--00043.jpg`, `dayClip5--00044.jpg`) are nearly identical — the car has barely moved. A random image-level split would place these near-identical frames on both sides of the train/val boundary. The model would appear to have very high validation accuracy simply because it memorised frames it effectively saw in training. This is called **data leakage**.
 
 **Solution:** Extract the sequence name from the filename stem using `.split('--')[0]` (e.g., `dayClip5`). Group all frames of a sequence together, then split by sequence (18 unique sequences) rather than by individual frame. Entire sequences go either to train or to val, never split across both.
 
-**Exception handling:** A stratified split (ensuring each class appears in both halves) fails when a class appears in only one sequence. With only 18 sequences this happens for `warning` and background clips. A `try/except` block catches the `ValueError` and falls back to a plain (non-stratified) split.
+A stratified split (ensuring each class appears in both halves) fails when a class appears in only one sequence. With only 18 sequences this happens for `warning` and background clips. A `try/except` block catches the `ValueError` and falls back to a plain (non-stratified) split.
 
 ---
 
 ### Cell 12 — Oversample the Warning Class
 
-**What:** Counts warning-class images in the training set. Calculates how many additional copies are needed to bring warning from 2.8% to ~10% of the training set. Creates **symbolic links** (not file copies) to warning-dominant images, with suffixes `_over1`, `_over2`, etc.
+Counts warning-class images in the training set. Calculates how many additional copies are needed to bring warning from 2.8% to ~10% of the training set. Creates **symbolic links** (not file copies) to warning-dominant images, with suffixes `_over1`, `_over2`, etc.
 
 **Symlink:** A symlink is a pointer to an existing file. It uses almost no disk space while appearing as a real file to the training process. Oversampling via symlinks saves approximately 20 GB of disk space compared to copying files.
 
-**Why:** At 2.8%, warning lights are so rare that the model sees far too few examples to learn them reliably. Without oversampling, warning mAP@50 would be significantly lower. Cell 18 results show oversampling worked: warning achieved mAP@50 = 0.843.
+At 2.8%, warning lights are so rare that the model sees far too few examples to learn them reliably. Without oversampling, warning mAP@50 would be significantly lower. Cell 18 results show oversampling worked: warning achieved mAP@50 = 0.843.
 
 ---
 
 ### Cell 13 — Create `data.yaml`
 
-**What:** Writes a YAML configuration file at `yolo_dataset/data.yaml` with the following structure:
+Writes a YAML configuration file at `yolo_dataset/data.yaml` with the following structure:
 
 ```yaml
 train: /absolute/path/yolo_dataset/images/train
@@ -227,29 +227,29 @@ nc: 3
 names: ['go', 'stop', 'warning']
 ```
 
-**Why:** YOLOv8 reads this file before training begins to learn where the data is, how many classes exist (`nc`), and what each class is named. Without this file, `model.train()` will raise a `FileNotFoundError`.
+YOLOv8 reads this file before training begins to learn where the data is, how many classes exist (`nc`), and what each class is named. Without this file, `model.train()` will raise a `FileNotFoundError`.
 
 ---
 
 ### Cell 14 — Label Audit
 
-**What:** Reads every `.txt` label file in the training and validation sets. For each line, checks that all five values are within the valid range [0, 1] and that the class ID is within [0, nc-1]. Counts and reports out-of-range values and malformed lines.
+Reads every `.txt` label file in the training and validation sets. For each line, checks that all five values are within the valid range [0, 1] and that the class ID is within [0, nc-1]. Counts and reports out-of-range values and malformed lines.
 
-**Why:** Conversion bugs (e.g., using pixel coordinates instead of normalised coordinates, or dividing by the wrong dimension) would produce coordinates outside [0, 1]. Such labels silently degrade training or cause NaN losses. Catching these errors now saves hours of debugging after a failed training run.
+Conversion bugs (e.g., using pixel coordinates instead of normalised coordinates, or dividing by the wrong dimension) would produce coordinates outside [0, 1]. Such labels silently degrade training or cause NaN losses. Catching these errors now saves hours of debugging after a failed training run.
 
 ---
 
 ### Cell 15 — Visualize YOLO Labels
 
-**What:** Takes a sample of images from the training set, reads their corresponding `.txt` label files, converts normalised coordinates back to pixel coordinates, and draws the boxes on the original images. Displays the result.
+Takes a sample of images from the training set, reads their corresponding `.txt` label files, converts normalised coordinates back to pixel coordinates, and draws the boxes on the original images. Displays the result.
 
-**Why:** This is the **ultimate proof** that Cell 10's conversion is correct. If boxes align with actual traffic lights in the image, the conversion is correct. If boxes are wildly misplaced, something went wrong with the coordinate formulas.
+This is the **ultimate proof** that Cell 10's conversion is correct. If boxes align with actual traffic lights in the image, the conversion is correct. If boxes are wildly misplaced, something went wrong with the coordinate formulas.
 
 ---
 
 ### Cell 16 — Train YOLOv8s
 
-**What:** Loads `yolov8s.pt` (pretrained on COCO's 80 classes) and calls `model.train()` with the following key settings:
+Loads `yolov8s.pt` (pretrained on COCO's 80 classes) and calls `model.train()` with the following key settings:
 
 | Parameter | Value | Reason |
 |-----------|-------|--------|
@@ -281,7 +281,7 @@ names: ['go', 'stop', 'warning']
 
 ### Cell 17 — Plot Training Curves
 
-**What:** Reads `results.csv` (saved automatically by YOLOv8 during training). Plots a **2×3 grid** of charts:
+Reads `results.csv` (saved automatically by YOLOv8 during training). Plots a **2×3 grid** of charts:
 
 - Row 1: `box_loss`, `cls_loss`, `dfl_loss` — each showing train and validation curves
 - Row 2: `mAP@50`, `mAP@50-95`, Precision & Recall
@@ -295,25 +295,25 @@ A red dotted vertical line marks **epoch 27** (best checkpoint).
 - `mAP@50` — mean Average Precision at 50% IoU overlap threshold (standard YOLO metric)
 - `mAP@50-95` — averaged over IoU thresholds 50%–95% in 5% steps (stricter metric)
 
-**Why:** Loss curves reveal whether the model is learning, overfitting, or underfitting. mAP curves confirm when performance peaks.
+Loss curves reveal whether the model is learning, overfitting, or underfitting. mAP curves confirm when performance peaks.
 
 ---
 
 ### Cell 18 — Evaluate on the Test Set
 
-**What:** Runs `model.val(split='test')` on all 22,481 unseen test images. Extracts per-class precision, recall, mAP@50, and mAP@50-95. Prints a dedicated spotlight on the warning class (the most challenging class after oversampling). Draws a grouped bar chart comparing all three classes across all four metrics.
+Runs `model.val(split='test')` on all 22,481 unseen test images. Extracts per-class precision, recall, mAP@50, and mAP@50-95. Prints a dedicated spotlight on the warning class (the most challenging class after oversampling). Draws a grouped bar chart comparing all three classes across all four metrics.
 
-**Why:** Validation metrics (from Cell 17) are computed on data used to select the best checkpoint. Test metrics are on completely unseen data — they are the honest measure of real-world performance.
+Validation metrics (from Cell 17) are computed on data used to select the best checkpoint. Test metrics are on completely unseen data — they are the honest measure of real-world performance.
 
 ---
 
 ### Cell 19 — Confusion Matrix
 
-**What:** Displays the confusion matrices auto-saved by YOLOv8 during evaluation: `confusion_matrix_normalized.png` (percentages) and `confusion_matrix.png` (raw counts). Also generates a test-set confusion matrix from the output of Cell 18.
+Displays the confusion matrices auto-saved by YOLOv8 during evaluation: `confusion_matrix_normalized.png` (percentages) and `confusion_matrix.png` (raw counts). Also generates a test-set confusion matrix from the output of Cell 18.
 
 **How to read it:** Each row represents a predicted class; each column represents a ground-truth class. A perfect model has all values on the diagonal (predicted = actual) and zeros elsewhere. Off-diagonal values indicate misclassifications.
 
-**Why:** The confusion matrix reveals which classes get confused with each other (e.g., does the model ever call a red light green?) and how many objects are missed entirely (false negatives).
+The confusion matrix reveals which classes get confused with each other (e.g., does the model ever call a red light green?) and how many objects are missed entirely (false negatives).
 
 ---
 
