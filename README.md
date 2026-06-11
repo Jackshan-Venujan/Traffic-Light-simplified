@@ -319,35 +319,35 @@ The confusion matrix reveals which classes get confused with each other (e.g., d
 
 ### Cell 20 — Inference on Sample Test Images
 
-**What:** Selects 12 test images that have at least one detection. Runs `model.predict()` in batches of 16. Draws coloured bounding boxes with confidence scores on each image. Displays a 3×4 grid.
+Selects 12 test images that have at least one detection. Runs `model.predict()` in batches of 16. Draws coloured bounding boxes with confidence scores on each image. Displays a 3×4 grid.
 
 **Confidence score:** A number between 0 and 1 indicating how certain the model is about a detection. A score of 0.87 means the model is 87% confident.
 
-**Why:** Visual inspection of live predictions on unseen images. The ultimate qualitative test — does the model actually look correct?
+Visual inspection of live predictions on unseen images. The ultimate qualitative test — does the model actually look correct?
 
 ---
 
 ### Cell 21 — Build Inference Video from Sequential Frames
 
-**What:** Takes the first 300 frames of the `daySequence1` clip (which contains 4,060 total frames — approximately 10 seconds at 30 fps). Runs inference in batches of 16. Writes annotated frames to `daySequence1_inference.mp4` using OpenCV's `VideoWriter`.
+Takes the first 300 frames of the `daySequence1` clip (which contains 4,060 total frames — approximately 10 seconds at 30 fps). Runs inference in batches of 16. Writes annotated frames to `daySequence1_inference.mp4` using OpenCV's `VideoWriter`.
 
-**Why:** Single-image inference confirms the model works. Video inference confirms it works on real temporal sequences — that detections are stable across consecutive frames and do not flicker wildly.
+Single-image inference confirms the model works. Video inference confirms it works on real temporal sequences — that detections are stable across consecutive frames and do not flicker wildly.
 
 ---
 
 ### Cell 21b — Test on a Custom Video or Image
 
-**What:** Accepts any `.mp4` or `.jpg` file path via a `SOURCE` variable. Auto-detects whether the input is a video or image. For video: reads with `cv2.VideoCapture`, processes in batches, writes output to a `detected/` subfolder. For image: runs predict and displays inline.
+Accepts any `.mp4` or `.jpg` file path via a `SOURCE` variable. Auto-detects whether the input is a video or image. For video: reads with `cv2.VideoCapture`, processes in batches, writes output to a `detected/` subfolder. For image: runs predict and displays inline.
 
 **Output:** `slowed_sample-3_detected.mp4` (video) or inline display (image).
 
-**Why:** Allows the user to test the model on their own dashcam footage or photos without modifying any other cell.
+Allows the user to test the model on their own dashcam footage or photos without modifying any other cell.
 
 ---
 
 ### Cell 22 — ONNX Export
 
-**What:** Exports the trained model to ONNX format:
+Exports the trained model to ONNX format:
 
 ```python
 model.export(format='onnx', imgsz=1280, opset=17, simplify=True)
@@ -357,15 +357,15 @@ Validates the exported file with `onnx.checker.check_model()`. Prints and compar
 
 **ONNX** (Open Neural Network Exchange) is a universal model format that runs on virtually any hardware and framework — including Android apps, web browsers (via WebAssembly), C++ applications, and embedded devices. PyTorch `.pt` files require Python and PyTorch to run; `.onnx` files do not.
 
-**Why:** The `.pt` model cannot be deployed to a phone or website. ONNX export is the gateway to real-world deployment.
+The `.pt` model cannot be deployed to a phone or website. ONNX export is the gateway to real-world deployment.
 
 ---
 
 ### Cell 23 — Summary + 7 Next Steps
 
-**What:** Prints a complete project summary — dataset statistics, model configuration, training outcome, and final test metrics — in a formatted block. Lists 7 actionable next steps for improving the model further.
+Prints a complete project summary — dataset statistics, model configuration, training outcome, and final test metrics — in a formatted block. Lists 7 actionable next steps for improving the model further.
 
-**Why:** Serves as the final record of the project. Useful for documentation, sharing results, and planning future iterations.
+Serves as the final record of the project. Useful for documentation, sharing results, and planning future iterations.
 
 ---
 
@@ -767,8 +767,4 @@ async def detect(file: UploadFile):
     results = model.predict(image, conf=0.25)
     return {"detections": results[0].tojson()}
 ```
-
-The client uploads an image; the server returns JSON with class labels, confidence scores, and bounding box coordinates.
-
----
 
