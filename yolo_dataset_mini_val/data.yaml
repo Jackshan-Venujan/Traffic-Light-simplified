@@ -1,0 +1,6 @@
+path: /home/auto_drive/Desktop/Traffic------new/yolo_dataset_mini_val
+train: images/val
+val:   images/val
+test:  images/val
+nc: 3
+names: [go, stop, warning]

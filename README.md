@@ -872,3 +872,68 @@ The client uploads an image; the server returns JSON with class labels, confiden
 
 ---
 
+## 12. Fine-Tune Plan — Improving on LISA
+
+This is a concrete, ordered plan. Real-world framing throughout; standard practice vs. shortcut is noted where relevant.
+
+---
+
+### Phase 0 — Fix the Integrity Issues *(do this first, ~1 hour)*
+
+1. **Resolve the model identity.** Decide: YOLO11s or YOLOv8s? Whichever you pick, make the `.pt` file, all comments, markdown, and summary agree. If the report must say YOLOv8 (e.g. the title is fixed), change `yolo11s.pt` → `yolov8s.pt`. They are a one-line swap in Ultralytics.
+2. **Re-run end to end once, clean**, so every metric comes from one run folder. Delete or archive stale v2/v4/v5 runs to avoid confusion.
+3. **Investigate the duplicate-label warnings** — open one flagged annotation JSON and check whether boxes genuinely repeat.
+
+---
+
+### Phase 1 — Establish an Honest Baseline *(standard practice)*
+
+Train the stock model with no oversampling and default loss, and record per-class test metrics. This is the scientific baseline — the thing every improvement is measured against. Without it you cannot claim any intervention "helped."
+
+```python
+model = YOLO('yolov8s.pt')   # or yolo11s.pt — but be consistent
+model.train(
+    data='data.yaml', epochs=100, imgsz=1280, batch=8,
+    cos_lr=True, lr0=0.01, lrf=0.001, patience=50, seed=42,
+    name='baseline_no_oversample',
+)
+```
+
+---
+
+### Phase 2 — Handle Imbalance the Defensible Way
+
+Replace frame-duplication with one of the following (ordered by ease of justification):
+
+| Approach | What it is | Real-world status | Effort |
+|---|---|---|---|
+| Ultralytics `copy_paste` | Pastes rare-class objects onto other images during training | Standard augmentation, varied backgrounds — far better than duplication | Set `copy_paste=0.3` in `train()` — one line |
+| Class-weighted / focal loss | Penalises errors on rare class more | The textbook answer for detection imbalance (Lin et al., RetinaNet, the focal-loss paper) | Moderate — needs config or custom loss |
+| Keep duplication but report honestly | What you have now | A known weak baseline | Zero — but weak defence |
+
+Run one of these, compare per-class test metrics against the Phase 1 baseline, and report the delta. That comparison is exactly the kind of evidence a viva rewards.
+
+---
+
+### Phase 3 — Attack the Real Weak Points *(go-recall and night)*
+
+Your data tells you where the model is weak. Target those, do not add random complexity:
+
+- **Low green recall:** check whether green lights are systematically smaller, more occluded, or more often at frame edges in your false negatives. The fix follows the cause — do not just "add augmentation" blindly.
+- **Night:** if you want to address it, the honest options are:
+  - (a) Split your reporting day vs. night so the weakness is visible and quantified — which you already do, good.
+  - (b) Optionally add brightness/contrast augmentation (`hsv_v` higher range) and re-measure.
+  - If you do not have time, write it up as a stated limitation with the day/night numbers as evidence. That is a perfectly defensible viva position.
+
+---
+
+### Phase 4 — Only If You Have Time and Want to Engage the Literature
+
+This is where the architectural ideas come in — but only as clearly-labelled extensions, with a measured before/after. The most cost-effective one for a tiny-object problem:
+
+**Add a P2 detection head** (the 160×160 high-res head). This is the single most relevant change for sub-10px lights. Ultralytics supports it via a custom model YAML (`yolov8-p2.yaml`). Expect higher recall on tiny lights at the cost of speed and VRAM. This would be a genuine, defensible contribution beyond a stock model.
+
+Everything else (BiFPN, WIoU, attention, Meta-YOLOv8) is real but progressively harder to implement correctly and harder to defend if you cannot explain the math. Do not bolt them on for show — an examiner will ask you to derive WIoU's focusing mechanism, and "the AI report mentioned it" is not an answer.
+
+---
+
